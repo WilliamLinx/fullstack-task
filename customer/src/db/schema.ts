@@ -1,13 +1,20 @@
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { randomUUID } from "crypto";
-import { LogType, TaskStatus } from "../types/task";
+import { TaskStatus } from "shared/types/task";
 
 export const tasks = sqliteTable("tasks", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => randomUUID()),
   status: text("status", {
-    enum: [TaskStatus.DONE, TaskStatus.ERROR, TaskStatus.IN_PROGRESS, TaskStatus.PAUSED, TaskStatus.PENDING],
+    enum: [
+      TaskStatus.DONE,
+      TaskStatus.ERROR,
+      TaskStatus.IN_PROGRESS,
+      TaskStatus.PAUSED,
+      TaskStatus.PENDING,
+      TaskStatus.CANCELLED,
+    ],
   }).notNull(),
   progress: integer("progress").default(0),
   error: text("error"),
@@ -25,9 +32,15 @@ export const logs = sqliteTable("logs", {
       onDelete: "cascade",
     }),
   taskStatus: text("taskStatus", {
-    enum: [TaskStatus.DONE, TaskStatus.ERROR, TaskStatus.IN_PROGRESS, TaskStatus.PAUSED, TaskStatus.PENDING],
+    enum: [
+      TaskStatus.DONE,
+      TaskStatus.ERROR,
+      TaskStatus.IN_PROGRESS,
+      TaskStatus.PAUSED,
+      TaskStatus.PENDING,
+      TaskStatus.CANCELLED,
+    ],
   }).notNull(),
-  type: text("type", { enum: [LogType.ERROR, LogType.INFO, LogType.WARNING] }).notNull(),
-  message: text("message").notNull(),
-  created_at: text("created_at").notNull(),
+  message: text("message"),
+  created_at: integer("created_at", { mode: "timestamp" }).notNull(),
 });
