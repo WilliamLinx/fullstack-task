@@ -3,6 +3,7 @@
   "workspaces": [
     "customer",
     "executor",
+    "frontend",
     "shared"
   ]
 }

@@ -1,0 +1,25 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.16.13",
+    "gsap": "^3.12.5",
+    "nuxt": "^3.13.2",
+    "nuxt-quasar-ui": "^2.1.7",
+    "quasar": "^2.17.4",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "sass": "^1.81.0",
+    "shared": "workspace:*"
+  }
+}
