@@ -38,18 +38,20 @@ class Task extends EventEmitter {
       if (this.isPaused) {
         return;
       }
+      // 5% chance of random error
+      if (Math.random() < 0.05) {
+        // Would be a try catch block in a real task
+        this.error(new Error("Random task error occurred"));
+        return;
+      }
+
       elapsedTime += interval;
       this.progress += 10;
       this.emit("progress");
 
       if (elapsedTime >= this.duration) {
         clearInterval(this.interval!);
-        if (Math.random() < 0.2) {
-          // 20% chance of random error
-          this.emit("error", new Error("Random task error occurred"));
-        } else {
-          this.emit("complete");
-        }
+        this.emit("complete");
       }
     }, interval);
 
@@ -76,6 +78,13 @@ class Task extends EventEmitter {
       this.isRunning = false;
       this.emit("cancel");
     }
+  }
+
+  error(error: Error) {
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
+    this.emit("error", error);
   }
 
   restart() {
@@ -112,7 +121,7 @@ class Executor {
     this.channel = await this.connection.createChannel();
 
     // Prepare a queue for receiving new tasks
-    this.channel.assertQueue(process.env.RABBITMQ_TASK_QUEUE_NAME, { durable: true });
+    this.channel.assertQueue(process.env.RABBITMQ_TASK_QUEUE_NAME, { durable: true, maxPriority: 5 });
     this.channel.prefetch(1); // Allow only one task to be sent to an executor at a time
     this.channel.assertQueue(process.env.RABBITMQ_REPORT_QUEUE_NAME, { durable: true });
 
@@ -131,7 +140,6 @@ class Executor {
 
   handleTask(msg: ConsumeMessage | null) {
     if (!msg) {
-      console.error("Received empty message");
       return;
     }
     const { taskId } = JSON.parse(msg.content.toString()) as CreateTask;
@@ -163,22 +171,19 @@ class Executor {
     const safeQueue = await this.commandChannel.assertQueue("", { exclusive: true, durable: false });
     await this.commandChannel.bindQueue(safeQueue.queue, process.env.RABBITMQ_COMMAND_EXCHANGE_NAME, taskId);
     // Create unbind fn for latter call
-    this.commandQueueUnbindCB = async () =>
+    this.commandQueueUnbindCB = async () => {
       await this.commandChannel?.unbindQueue(safeQueue.queue, process.env.RABBITMQ_COMMAND_EXCHANGE_NAME, taskId);
-
-    console.log(`Executor is now bound to control commands for taskId: ${taskId}`);
+      await this.commandChannel?.deleteQueue(safeQueue.queue);
+    };
 
     this.commandChannel.consume(safeQueue.queue, (msg) => this.handleCommand(msg), { noAck: false });
   }
 
   handleCommand(msg: ConsumeMessage | null) {
-    console.log("Received command", msg?.content.toString());
     if (!msg) {
-      console.error("Received empty message");
       return;
     }
     if (!this.currentTask) {
-      console.error("No task to control");
       this.commandChannel?.ack(msg);
       return;
     }
@@ -266,6 +271,7 @@ class Executor {
   }
 
   async closeConnection() {
+    if (this.currentTask) this.currentTask.error(new Error("Executor is forced to shut down"));
     if (this.channel) await this.channel.close();
     if (this.commandChannel) await this.commandChannel.close();
     if (this.connection) await this.connection.close();
