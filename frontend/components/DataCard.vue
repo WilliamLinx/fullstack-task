@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <q-card-section>
-      <div class="text-h6" v-if="title">{{ title }}</div>
+      <div v-if="title" class="text-h6">{{ title }}</div>
     </q-card-section>
 
     <q-card-section class="q-pt-none">
