@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 
 import taskRouter from "./routes/task";
 import { connectToRabbitMQ } from "./utils/rabbitMQ";
@@ -8,6 +9,8 @@ const app = express();
 
 // Register middleware
 app.use(express.json());
+app.use(cors()); // Enable all origins for simplicity
+
 // Register routes
 app.use("/task", taskRouter);
 

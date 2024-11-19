@@ -18,8 +18,8 @@ export const tasks = sqliteTable("tasks", {
   }).notNull(),
   progress: integer("progress").default(0),
   error: text("error"),
-  created_at: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-  updated_at: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 export const logs = sqliteTable("logs", {
@@ -42,5 +42,5 @@ export const logs = sqliteTable("logs", {
     ],
   }).notNull(),
   message: text("message"),
-  created_at: integer("created_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });

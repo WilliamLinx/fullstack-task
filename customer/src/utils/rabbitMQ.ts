@@ -14,7 +14,7 @@ export async function connectToRabbitMQ() {
   channel = await connection.createChannel();
 
   // Prepare a queue for distributing tasks
-  channel.assertQueue(process.env.RABBITMQ_TASK_QUEUE_NAME, { durable: true });
+  channel.assertQueue(process.env.RABBITMQ_TASK_QUEUE_NAME, { durable: true, maxPriority: 5 });
 
   // Prepare exchange for sending commands
   channel.assertExchange(process.env.RABBITMQ_COMMAND_EXCHANGE_NAME, "direct", { durable: true });
@@ -24,6 +24,10 @@ export async function connectToRabbitMQ() {
   channel.consume(process.env.RABBITMQ_REPORT_QUEUE_NAME, (msg) => handleReport(msg), { noAck: true });
 
   console.log("Connected to RabbitMQ");
+
+  // Graceful shutdown
+  process.on("SIGINT", closeConnection); // Ctrl + C handler
+  process.on("SIGTERM", closeConnection); // kill PID handler
 }
 
 export async function sendCommandToQueue(command: Command, taskId: string) {
@@ -33,32 +37,37 @@ export async function sendCommandToQueue(command: Command, taskId: string) {
   });
 }
 
-export async function sendTaskToQueue(taskId: string) {
+export async function sendTaskToQueue(taskId: string, priority: number) {
   if (!channel) throw new Error("Channel is not initialized");
   channel.sendToQueue(process.env.RABBITMQ_TASK_QUEUE_NAME, Buffer.from(JSON.stringify({ taskId })), {
     persistent: true,
+    priority,
   });
 }
 
 async function handleReport(msg: ConsumeMessage | null) {
   if (!msg) {
-    console.error("Received empty message");
     return;
   }
   const report = JSON.parse(msg.content.toString()) as Report;
-  console.log("Received report: ", report);
+
+  // do not create log and update if task is not in DB
+  const task = await db.select().from(tables.tasks).where(eq(tables.tasks.id, report.taskId));
+  if (task.length === 0) {
+    return;
+  }
 
   switch (report.type) {
     case ReportType.STARTED:
       await db
         .update(tables.tasks)
-        .set({ status: TaskStatus.IN_PROGRESS, updated_at: new Date(msg.properties.timestamp) })
+        .set({ status: TaskStatus.IN_PROGRESS, updatedAt: new Date(msg.properties.timestamp) })
         .where(eq(tables.tasks.id, report.taskId));
       await db.insert(tables.logs).values({
         taskId: report.taskId,
         taskStatus: TaskStatus.IN_PROGRESS,
         message: "Task has started",
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
       break;
     case ReportType.PROGRESS:
@@ -68,75 +77,75 @@ async function handleReport(msg: ConsumeMessage | null) {
         .set({
           status: TaskStatus.IN_PROGRESS,
           progress: progressReport.progress,
-          updated_at: new Date(msg.properties.timestamp),
+          updatedAt: new Date(msg.properties.timestamp),
         })
         .where(eq(tables.tasks.id, report.taskId));
       await db.insert(tables.logs).values({
         taskId: report.taskId,
         taskStatus: TaskStatus.IN_PROGRESS,
         message: `Task progress: ${progressReport.progress}%`,
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
       break;
     case ReportType.COMPLETED:
       await db
         .update(tables.tasks)
-        .set({ status: TaskStatus.DONE, updated_at: new Date(msg.properties.timestamp) })
+        .set({ status: TaskStatus.DONE, updatedAt: new Date(msg.properties.timestamp) })
         .where(eq(tables.tasks.id, report.taskId));
       await db.insert(tables.logs).values({
         taskId: report.taskId,
         taskStatus: TaskStatus.DONE,
         message: "Task has completed",
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
       break;
     case ReportType.ERROR:
       const errorReport = report as ErrorReport;
       await db
         .update(tables.tasks)
-        .set({ status: TaskStatus.ERROR, error: errorReport.error, updated_at: new Date(msg.properties.timestamp) })
+        .set({ status: TaskStatus.ERROR, error: errorReport.error, updatedAt: new Date(msg.properties.timestamp) })
         .where(eq(tables.tasks.id, report.taskId));
       await db.insert(tables.logs).values({
         taskId: report.taskId,
         taskStatus: TaskStatus.ERROR,
         message: `Task has failed: ${errorReport.error}`,
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
       break;
     case ReportType.PAUSED:
       await db
         .update(tables.tasks)
-        .set({ status: TaskStatus.PAUSED, updated_at: new Date(msg.properties.timestamp) })
+        .set({ status: TaskStatus.PAUSED, updatedAt: new Date(msg.properties.timestamp) })
         .where(eq(tables.tasks.id, report.taskId));
       await db.insert(tables.logs).values({
         taskId: report.taskId,
         taskStatus: TaskStatus.PAUSED,
         message: "Task has paused",
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
       break;
     case ReportType.RESUMED:
       await db
         .update(tables.tasks)
-        .set({ status: TaskStatus.IN_PROGRESS, updated_at: new Date(msg.properties.timestamp) })
+        .set({ status: TaskStatus.IN_PROGRESS, updatedAt: new Date(msg.properties.timestamp) })
         .where(eq(tables.tasks.id, report.taskId));
       await db.insert(tables.logs).values({
         taskId: report.taskId,
         taskStatus: TaskStatus.IN_PROGRESS,
         message: "Task has resumed",
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
       break;
     case ReportType.CANCELLED:
       await db
         .update(tables.tasks)
-        .set({ status: TaskStatus.CANCELLED, updated_at: new Date(msg.properties.timestamp) })
+        .set({ status: TaskStatus.CANCELLED, updatedAt: new Date(msg.properties.timestamp) })
         .where(eq(tables.tasks.id, report.taskId));
       await db.insert(tables.logs).values({
         taskId: report.taskId,
         taskStatus: TaskStatus.CANCELLED,
         message: "Task has been cancelled",
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
       break;
     case ReportType.RESTARTED:
@@ -144,7 +153,7 @@ async function handleReport(msg: ConsumeMessage | null) {
         taskId: report.taskId,
         taskStatus: TaskStatus.PENDING,
         message: "Task has been restarted",
-        created_at: new Date(msg.properties.timestamp),
+        createdAt: new Date(msg.properties.timestamp),
       });
     default:
       console.error("Unknown report type: ", report);
@@ -157,7 +166,3 @@ async function closeConnection() {
   console.log("Diconnected from RabbitMQ");
   process.exit(0);
 }
-
-// Graceful shutdown
-process.on("SIGINT", closeConnection); // Ctrl + C handler
-process.on("SIGTERM", closeConnection); // kill PID handler
