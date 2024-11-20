@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "postbuild": "cp package.json dist/package.json && cd dist && yarn install --production"
   },
   "dependencies": {
     "amqplib": "^0.10.4",

@@ -9,7 +9,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "postbuild": "cp package.json dist/package.json && cd dist && yarn install --production"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",
