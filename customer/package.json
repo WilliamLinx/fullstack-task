@@ -5,12 +5,12 @@
   "author": "William Linx",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "postbuild": "cp package.json dist/package.json && cp yarn.lock dist/yarn.lock && cd dist && yarn install --production"
+    "postbuild": "cp package.json dist/package.json && cp yarn.lock dist/yarn.lock && cd dist && yarn install"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",
@@ -28,7 +28,6 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.9.0",
     "drizzle-kit": "^0.28.1",
-    "shared": "^0.2.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.3"
   }

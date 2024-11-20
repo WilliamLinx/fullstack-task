@@ -5,7 +5,7 @@
   "author": "William Linx",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "postbuild": "cp package.json dist/package.json && cp yarn.lock dist/yarn.lock && cd dist && yarn install --production"
   },
@@ -17,7 +17,6 @@
     "@types/amqplib": "^0.10.5",
     "@types/node": "^22.9.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.3",
-    "shared": "^0.2.0"
+    "typescript": "^5.6.3"
   }
 }
