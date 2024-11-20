@@ -111,9 +111,9 @@
 import TaskLog from "./Dialog/TaskLog.vue";
 
 import type { QTable, QTableColumn } from "quasar";
-import type { GetAllTasksResponse, Task } from "shared/types/response";
+import type { GetAllTasksResponse, Task } from "shared/src/types/response";
 
-import { TaskStatus } from "shared/types/task";
+import { TaskStatus } from "shared/src/types/task";
 
 const config = useRuntimeConfig();
 const q = useQuasar();

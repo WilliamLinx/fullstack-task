@@ -3,8 +3,8 @@ import { validateRequest } from "zod-express-middleware";
 
 import { allTasksSchema, createTaskSchema, taskIdSchema, taskStatsSchema } from "../schemas/task";
 import { count, db, desc, eq, tables, and, gte, lte } from "../db";
-import { CommandType, TaskStatus } from "shared/types/task";
-import type { TaskStatsResponse, GetAllTasksResponse, Task, TaskLogResponse } from "shared/types/response";
+import { CommandType, TaskStatus } from "shared";
+import type { TaskStatsResponse, GetAllTasksResponse, TaskLogResponse } from "shared";
 import { sendCommandToQueue, sendTaskToQueue } from "../utils/rabbitMQ";
 
 const taskRouter = express.Router();
@@ -27,6 +27,7 @@ taskRouter.post("/create", validateRequest({ body: createTaskSchema }), async (r
 });
 
 taskRouter.get("/all", validateRequest({ query: allTasksSchema }), async (req, res) => {
+  //TODO: fix
   const taskCount = await db.select({ total: count() }).from(tables.tasks);
   const tasks = await db
     .select()

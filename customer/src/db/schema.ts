@@ -1,6 +1,6 @@
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { randomUUID } from "crypto";
-import { TaskStatus } from "shared/types/task";
+import { TaskStatus } from "shared";
 
 export const tasks = sqliteTable("tasks", {
   id: text("id")

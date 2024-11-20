@@ -2,7 +2,7 @@ import "dotenv/config";
 import amqp, { Connection, Channel, ConsumeMessage } from "amqplib";
 import EventEmitter from "events";
 
-import { Command, CommandType, ErrorReport, Report, ReportType, CreateTask, ProgressReport } from "shared/types/task";
+import { Command, CommandType, ErrorReport, Report, ReportType, CreateTask, ProgressReport } from "shared";
 
 class Task extends EventEmitter {
   taskId: string;

@@ -41,8 +41,8 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent, type QTableColumn } from "quasar";
-import type { TaskLog, TaskLogResponse } from "shared/types/response";
-import { TaskStatus } from "shared/types/task";
+import type { TaskLog, TaskLogResponse } from "shared/src/types/response";
+import { TaskStatus } from "shared/src/types/task";
 
 const props = defineProps({
   taskId: String,
