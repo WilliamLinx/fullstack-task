@@ -36,15 +36,10 @@ jobs:
 
       - name: Copy built applications
         run: |
+          cp -r node_modules task-service/usr/local/task-service/
           cp -r executor/dist/ task-service/usr/local/task-service/executor
           cp -r customer/dist/ task-service/usr/local/task-service/customer
           cp -r frontend/.output/ task-service/usr/local/task-service/frontend
-
-      - name: Install production dependencies
-        run: |
-          cd task-service/usr/local/task-service/executor && yarn install --production && cd -
-          cd task-service/usr/local/task-service/customer && yarn install --production && cd -
-          cd task-service/usr/local/task-service/frontend && yarn install --production && cd -
 
       - name: Create control file
         run: |
