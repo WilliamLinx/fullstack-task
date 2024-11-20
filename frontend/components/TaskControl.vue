@@ -308,6 +308,20 @@ async function deleteTask(taskId: string) {
 
 onMounted(() => {
   tableRef.value?.requestServerInteraction();
+
+  watch(
+    autoRefresh,
+    (value) => {
+      if (value) {
+        autoRefreshInterval.value = setInterval(() => tableRef.value?.requestServerInteraction(), 3000);
+      } else {
+        if (autoRefreshInterval.value) {
+          clearInterval(autoRefreshInterval.value);
+        }
+      }
+    },
+    { immediate: true }
+  );
 });
 
 onUnmounted(() => {
@@ -315,20 +329,6 @@ onUnmounted(() => {
     clearInterval(autoRefreshInterval.value);
   }
 });
-
-watch(
-  autoRefresh,
-  (value) => {
-    if (value) {
-      autoRefreshInterval.value = setInterval(() => tableRef.value?.requestServerInteraction(), 3000);
-    } else {
-      if (autoRefreshInterval.value) {
-        clearInterval(autoRefreshInterval.value);
-      }
-    }
-  },
-  { immediate: true }
-);
 </script>
 
 <style scoped lang="sass"></style>
