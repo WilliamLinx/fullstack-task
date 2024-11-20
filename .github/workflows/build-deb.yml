@@ -37,11 +37,11 @@ jobs:
       - name: Copy built applications
         run: |
           cp -r executor/dist/ task-service/usr/local/task-service/executor
-          cp -r node_modules/shared task-service/usr/local/task-service/executor/node_modules/shared
+          cp -r node_modules/shared/ task-service/usr/local/task-service/executor/node_modules/shared
           cp -r customer/dist/ task-service/usr/local/task-service/customer
-          cp -r node_modules/shared task-service/usr/local/task-service/customer/node_modules/shared
+          cp -r node_modules/shared/ task-service/usr/local/task-service/customer/node_modules/shared
           cp -r frontend/.output/ task-service/usr/local/task-service/frontend
-          cp -r node_modules/shared task-service/usr/local/task-service/frontend/node_modules/shared
+          cp -r node_modules/shared/ task-service/usr/local/task-service/frontend/node_modules/shared
 
       - name: Create control file
         run: |
