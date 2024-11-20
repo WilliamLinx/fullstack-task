@@ -36,15 +36,9 @@ jobs:
 
       - name: Copy built applications
         run: |
-          cp -r packages/executor task-service/usr/local/task-service/
-          cp -r packages/customer task-service/usr/local/task-service/
-          cp -r packages/frontend task-service/usr/local/task-service/
-
-      - name: Install production dependencies
-        run: |
-          cd task-service/usr/local/task-service/executor && yarn install --production && cd -
-          cd task-service/usr/local/task-service/customer && yarn install --production && cd -
-          cd task-service/usr/local/task-service/frontend && yarn install --production && cd -
+          cp -r executor/dist task-service/usr/local/task-service/
+          cp -r customer/dist task-service/usr/local/task-service/
+          cp -r frontend/.output task-service/usr/local/task-service/
 
       - name: Create control file
         run: |
@@ -100,7 +94,7 @@ jobs:
           [Service]
           Type=simple
           User=www-data
-          ExecStart=/usr/bin/node /usr/local/task-service/frontend/index.js
+          ExecStart=/usr/bin/node /usr/local/task-service/frontend/server/index.mjs
           Restart=always
 
           [Install]
