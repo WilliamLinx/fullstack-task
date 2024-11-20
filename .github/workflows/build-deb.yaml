@@ -1,0 +1,141 @@
+name: Build Debian Package for Task Service
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build applications
+        run: |
+          yarn workspace executor build
+          yarn workspace customer build
+          yarn workspace frontend build
+
+      - name: Create Debian package structure
+        run: |
+          mkdir -p task-service/DEBIAN
+          mkdir -p task-service/usr/local/task-service
+          mkdir -p task-service/etc/systemd/system
+
+      - name: Copy built applications
+        run: |
+          cp -r packages/executor task-service/usr/local/task-service/
+          cp -r packages/customer task-service/usr/local/task-service/
+          cp -r packages/frontend task-service/usr/local/task-service/
+
+      - name: Install production dependencies
+        run: |
+          cd task-service/usr/local/task-service/executor && yarn install --production && cd -
+          cd task-service/usr/local/task-service/customer && yarn install --production && cd -
+          cd task-service/usr/local/task-service/frontend && yarn install --production && cd -
+
+      - name: Create control file
+        run: |
+          cat << 'EOF' > task-service/DEBIAN/control
+          Package: task-service
+          Version: 1.0.0
+          Section: utils
+          Priority: optional
+          Architecture: all
+          Depends: nodejs (>= 18), yarn, rabbitmq-server
+          Maintainer: William Linx
+          Description: Služba pro exekuci úloh s RabbitMQ
+          EOF
+
+      - name: Create systemd service files
+        run: |
+          cat << 'EOF' > task-service/etc/systemd/system/executor@.service
+          [Unit]
+          Description=Executor Service Instance %i
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=www-data
+          ExecStart=/usr/bin/node /usr/local/task-service/executor/index.js
+          Restart=always
+          Environment=INSTANCE_ID=%i
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat << 'EOF' > task-service/etc/systemd/system/customer.service
+          [Unit]
+          Description=Customer Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=www-data
+          ExecStart=/usr/bin/node /usr/local/task-service/customer/index.js
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat << 'EOF' > task-service/etc/systemd/system/frontend.service
+          [Unit]
+          Description=Frontend Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=www-data
+          ExecStart=/usr/bin/node /usr/local/task-service/frontend/index.js
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+      - name: Create postinst script
+        run: |
+          cat << 'EOF' > task-service/DEBIAN/postinst
+          #!/bin/bash
+          set -e
+
+          # Reload systemd daemon
+          systemctl daemon-reload
+
+          # Enable services
+          systemctl enable executor@1.service
+          systemctl enable executor@2.service
+          systemctl enable customer.service
+          systemctl enable frontend.service
+
+          # Start services
+          systemctl start rabbitmq-server
+          systemctl start executor@1.service
+          systemctl start executor@2.service
+          systemctl start customer.service
+          systemctl start frontend.service
+          EOF
+          chmod +x task-service/DEBIAN/postinst
+
+      - name: Build Debian package
+        run: dpkg-deb --build task-service
+
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v3
+        with:
+          name: task-service.deb
+          path: task-service.deb
