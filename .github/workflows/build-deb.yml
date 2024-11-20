@@ -36,7 +36,6 @@ jobs:
 
       - name: Copy built applications
         run: |
-          cp -r node_modules task-service/usr/local/task-service/
           cp -r executor/dist/ task-service/usr/local/task-service/executor
           cp -r customer/dist/ task-service/usr/local/task-service/customer
           cp -r frontend/.output/ task-service/usr/local/task-service/frontend
