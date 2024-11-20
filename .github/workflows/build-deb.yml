@@ -40,6 +40,12 @@ jobs:
           cp -r customer/dist/ task-service/usr/local/task-service/customer
           cp -r frontend/.output/ task-service/usr/local/task-service/frontend
 
+      - name: Install production dependencies
+        run: |
+          cd task-service/usr/local/task-service/executor && yarn install --production && cd -
+          cd task-service/usr/local/task-service/customer && yarn install --production && cd -
+          cd task-service/usr/local/task-service/frontend && yarn install --production && cd -
+
       - name: Create control file
         run: |
           cat << 'EOF' > task-service/DEBIAN/control
