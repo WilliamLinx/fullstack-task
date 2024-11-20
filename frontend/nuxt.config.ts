@@ -16,7 +16,6 @@ export default defineNuxtConfig({
       },
     },
   },
-  ssr: false, //For simiplcity, we are not using SSR
   typescript: {
     typeCheck: true,
   },
