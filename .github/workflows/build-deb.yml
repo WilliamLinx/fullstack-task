@@ -128,7 +128,7 @@ jobs:
           #!/bin/bash
           set -e
 
-          apt-get install -y nodejs npm rabbitmq-server
+          apt install -y nodejs npm rabbitmq-server
 
           # Check and install Yarn
           if ! command -v yarn &>/dev/null; then
