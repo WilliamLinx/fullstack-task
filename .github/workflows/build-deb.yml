@@ -154,8 +154,8 @@ jobs:
           if [ ! -f "/usr/local/task-service/customer/data.db" ]; then
             yarn workspace customer db:push
             # Ensure write access
-            chmod 700 /usr/local/task-service/customer
-            chmod 700 /usr/local/task-service/customer/data.db
+            chmod 770 /usr/local/task-service/customer
+            chmod 770 /usr/local/task-service/customer/data.db
           fi
 
           # Reload systemd daemon
