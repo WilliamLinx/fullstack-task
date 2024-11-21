@@ -13,7 +13,7 @@ app.use(
   cors({
     origin: "http://localhost:3000",
   })
-); // Allow all origins for simplicity
+);
 
 // Register routes
 app.use("/task", taskRouter);
