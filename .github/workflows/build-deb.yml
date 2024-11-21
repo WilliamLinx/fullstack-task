@@ -53,7 +53,7 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: all
-          Depends: nodejs (>= 18), yarn, rabbitmq-server
+          Depends: nodejs (>= 18), npm, rabbitmq-server
           Maintainer: William Linx
           Description: Služba pro exekuci úloh s RabbitMQ
           EOF
@@ -128,6 +128,9 @@ jobs:
           cat << 'EOF' > task-service/DEBIAN/postinst
           #!/bin/bash
           set -e
+
+          # Install yarn
+          npm install --global yarn
 
           # Install dependencies using Yarn monorepo
           cd /usr/local/task-service
