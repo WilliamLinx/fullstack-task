@@ -54,7 +54,7 @@ jobs:
           Architecture: all
           Depends: nodejs (>= 18), npm, rabbitmq-server
           Maintainer: William Linx
-          Description: Služba pro exekuci úloh s RabbitMQ
+          Description: Task Service for executing time consuming tasks in background distributed by RabbitMQ
           EOF
 
       - name: Create systemd service files
@@ -70,13 +70,13 @@ jobs:
           ExecStart=/usr/bin/node /usr/local/task-service/executor/index.js
           Restart=always
           Environment=INSTANCE_ID=%i
-          Environment=RABBITMQ_HOST=localhost
-          Environment=RABBITMQ_PORT=5672
-          Environment=RABBITMQ_USER=guest
-          Environment=RABBITMQ_PASSWORD=guest
-          Environment=RABBITMQ_TASK_QUEUE_NAME=task_queue
-          Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=command_exchange
-          Environment=RABBITMQ_REPORT_QUEUE_NAME=report_queue
+          Environment=RABBITMQ_HOST=${{ vars.RABBITMQ_HOST }}
+          Environment=RABBITMQ_PORT=${{ vars.RABBITMQ_PORT }}
+          Environment=RABBITMQ_USER=${{ secrets.RABBITMQ_USER}}
+          Environment=RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD}}
+          Environment=RABBITMQ_TASK_QUEUE_NAME=${{ vars.RABBITMQ_TASK_QUEUE_NAME }}
+          Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=${{ vars.RABBITMQ_COMMAND_EXCHANGE_NAME }}
+          Environment=RABBITMQ_REPORT_QUEUE_NAME=${{ vars.RABBITMQ_REPORT_QUEUE_NAME }}
 
           [Install]
           WantedBy=multi-user.target
@@ -92,15 +92,15 @@ jobs:
           User=www-data
           ExecStart=/usr/bin/node /usr/local/task-service/customer/index.js
           Restart=always
-          Environment=RABBITMQ_HOST=localhost
-          Environment=RABBITMQ_PORT=5672
-          Environment=RABBITMQ_USER=guest
-          Environment=RABBITMQ_PASSWORD=guest
-          Environment=RABBITMQ_TASK_QUEUE_NAME=task_queue
-          Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=command_exchange
-          Environment=RABBITMQ_REPORT_QUEUE_NAME=report_queue
-          Environment=DB_FILE_NAME=file:/usr/local/task-service/customer/data.db
-          Environment=SERVER_PORT=3001
+          Environment=RABBITMQ_HOST=${{ vars.RABBITMQ_HOST }}
+          Environment=RABBITMQ_PORT=${{ vars.RABBITMQ_PORT }}
+          Environment=RABBITMQ_USER=${{ secrets.RABBITMQ_USER}}
+          Environment=RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD}}
+          Environment=RABBITMQ_TASK_QUEUE_NAME=${{ vars.RABBITMQ_TASK_QUEUE_NAME }}
+          Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=${{ vars.RABBITMQ_COMMAND_EXCHANGE_NAME }}
+          Environment=RABBITMQ_REPORT_QUEUE_NAME=${{ vars.RABBITMQ_REPORT_QUEUE_NAME }}
+          Environment=DB_FILE_NAME=file:/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
+          Environment=SERVER_PORT=${{ vars.CUSTOMER_SERVER_PORT }}
 
           [Install]
           WantedBy=multi-user.target
@@ -116,7 +116,7 @@ jobs:
           User=www-data
           ExecStart=/usr/bin/node /usr/local/task-service/frontend/server/index.mjs
           Restart=always
-          Environment=NUXT_PUBLIC_API_BASE=http://localhost:3001
+          Environment=NUXT_PUBLIC_API_BASE=http://localhost:${{ vars.CUSTOMER_SERVER_PORT }}
 
           [Install]
           WantedBy=multi-user.target
@@ -145,17 +145,17 @@ jobs:
             schema: "./db/schema.js",
             dialect: "sqlite",
             dbCredentials: {
-              url: "file:/usr/local/task-service/customer/data.db",
+              url: "file:/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}",
             },
           };
           CATEND
 
           # Run database creation if the database does not exist (in futuru would be migrations if exists)
-          if [ ! -f "/usr/local/task-service/customer/data.db" ]; then
+          if [ ! -f "/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}" ]; then
             yarn workspace customer db:push
             # Ensure write access
-            chmod 770 /usr/local/task-service/customer
-            chmod 770 /usr/local/task-service/customer/data.db
+            chmod 777 /usr/local/task-service/customer
+            chmod 777 /usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
           fi
 
           # Reload systemd daemon
