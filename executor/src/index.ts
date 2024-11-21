@@ -24,7 +24,6 @@ class Task extends EventEmitter {
 
   start() {
     if (this.isRunning) {
-      console.warn(`Task ${this.taskId} is already running.`);
       return;
     }
     this.isRunning = true;
@@ -229,30 +228,36 @@ class Executor {
     });
 
     task.on("pause", () => {
+      console.log(`Task ${task.taskId} paused`);
       this.sendReport({ type: ReportType.PAUSED, taskId: task.taskId });
     });
 
     task.on("resume", () => {
+      console.log(`Task ${task.taskId} resumed`);
       this.sendReport({ type: ReportType.RESUMED, taskId: task.taskId });
     });
 
     task.on("complete", () => {
+      console.log(`Task ${task.taskId} completed`);
       this.sendReport({ type: ReportType.COMPLETED, taskId: task.taskId });
       finishCallback();
       this.currentTask = null;
     });
 
     task.on("cancel", () => {
+      console.warn(`Task ${task.taskId} cancelled`);
       this.sendReport({ type: ReportType.CANCELLED, taskId: task.taskId });
       finishCallback();
       this.currentTask = null;
     });
 
     task.on("restart", () => {
+      console.warn(`Task ${task.taskId} restarted`);
       this.sendReport({ type: ReportType.RESTARTED, taskId: task.taskId });
     });
 
     task.on("error", (error: Error) => {
+      console.error(`Task ${task.taskId} failed: ${error.message}`);
       this.sendReport({
         type: ReportType.ERROR,
         taskId: task.taskId,
