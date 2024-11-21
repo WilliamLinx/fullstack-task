@@ -6,7 +6,7 @@ Task Execution Service is a yarn [workspace](https://yarnpkg.com/features/worksp
 
 ### Customer
 
-Customer is controller for the task execution service. Express.js based web server with connection to RabbitMQ for communication with Executors and LibSQL DB (SQLite).
+Customer is controller for the task execution service. [Express.js](https://expressjs.com/) based web server with connection to [RabbitMQ](https://www.rabbitmq.com/) for communication with Executors and [LibSQL](https://turso.tech/libsql) DB (SQLite).
 
 ### Executor
 
@@ -24,7 +24,7 @@ Shared is a repo that contains types for project.
 
 ### Communication
 
-![Communication Model](/assets/Service%20Model.png))
+![Communication Model](/assets/Service%20Model.png)
 
 #### RabbitMQ Components
 
