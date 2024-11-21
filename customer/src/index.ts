@@ -9,7 +9,11 @@ const app = express();
 
 // Register middleware
 app.use(express.json());
-app.use(cors({ origin: ["*"] })); // Allow all origins for simplicity
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  })
+); // Allow all origins for simplicity
 
 // Register routes
 app.use("/task", taskRouter);
