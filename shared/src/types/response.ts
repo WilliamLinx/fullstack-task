@@ -34,3 +34,11 @@ export interface TaskLog {
   message: string;
   createdAt: string | Date;
 }
+
+export interface TaskCreateResponse {
+  taskId: string;
+}
+
+export interface GeneralResponse {
+  message: string;
+}

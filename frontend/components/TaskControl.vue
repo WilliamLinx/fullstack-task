@@ -111,7 +111,7 @@
 import TaskLog from "./Dialog/TaskLog.vue";
 
 import type { QTable, QTableColumn } from "quasar";
-import type { GetAllTasksResponse, Task } from "shared/src/types/response";
+import type { GeneralResponse, GetAllTasksResponse, Task, TaskCreateResponse } from "shared/src/types/response";
 
 import { TaskStatus } from "shared/src/types/task";
 
@@ -203,7 +203,7 @@ async function onRequest(props: any) {
 
 async function createNewTask() {
   try {
-    await $fetch(`${config.public.apiBase}/task/create`, {
+    const res = await $fetch<TaskCreateResponse>(`${config.public.apiBase}/task/create`, {
       method: "POST",
       body: JSON.stringify({
         priority: taskPriority.value.value,
@@ -211,7 +211,7 @@ async function createNewTask() {
     });
     q.notify({
       type: "positive",
-      message: "New task created",
+      message: `New task '${res.taskId}' created`,
     });
   } catch (error) {
     q.notify({
@@ -223,12 +223,12 @@ async function createNewTask() {
 
 async function pauseTask(taskId: string) {
   try {
-    await $fetch(`${config.public.apiBase}/task/${taskId}/pause`, {
+    const res = await $fetch<GeneralResponse>(`${config.public.apiBase}/task/${taskId}/pause`, {
       method: "POST",
     });
     q.notify({
       type: "positive",
-      message: "Task paused",
+      message: res.message,
     });
   } catch (error) {
     q.notify({
@@ -240,12 +240,12 @@ async function pauseTask(taskId: string) {
 
 async function resumeTask(taskId: string) {
   try {
-    await $fetch(`${config.public.apiBase}/task/${taskId}/resume`, {
+    const res = await $fetch<GeneralResponse>(`${config.public.apiBase}/task/${taskId}/resume`, {
       method: "POST",
     });
     q.notify({
       type: "positive",
-      message: "Task resumed",
+      message: res.message,
     });
   } catch (error) {
     q.notify({
@@ -257,12 +257,12 @@ async function resumeTask(taskId: string) {
 
 async function cancelTask(taskId: string) {
   try {
-    await $fetch(`${config.public.apiBase}/task/${taskId}/cancel`, {
+    const res = await $fetch<GeneralResponse>(`${config.public.apiBase}/task/${taskId}/cancel`, {
       method: "POST",
     });
     q.notify({
       type: "positive",
-      message: "Task canceled",
+      message: res.message,
     });
   } catch (error) {
     q.notify({
@@ -274,12 +274,12 @@ async function cancelTask(taskId: string) {
 
 async function retryTask(taskId: string) {
   try {
-    await $fetch(`${config.public.apiBase}/task/${taskId}/restart`, {
+    const res = await $fetch<GeneralResponse>(`${config.public.apiBase}/task/${taskId}/restart`, {
       method: "POST",
     });
     q.notify({
       type: "positive",
-      message: "Task retried",
+      message: res.message,
     });
   } catch (error) {
     q.notify({
@@ -291,12 +291,12 @@ async function retryTask(taskId: string) {
 
 async function deleteTask(taskId: string) {
   try {
-    await $fetch(`${config.public.apiBase}/task/${taskId}`, {
+    const res = await $fetch<GeneralResponse>(`${config.public.apiBase}/task/${taskId}`, {
       method: "DELETE",
     });
     q.notify({
       type: "positive",
-      message: "Task deleted",
+      message: res.message,
     });
   } catch (error) {
     q.notify({

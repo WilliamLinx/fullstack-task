@@ -4,7 +4,13 @@ import { validateRequest } from "zod-express-middleware";
 import { allTasksSchema, createTaskSchema, taskIdSchema, taskStatsSchema } from "../schemas/task";
 import { count, db, desc, eq, tables, and, gte, lte } from "../db";
 import { CommandType, TaskStatus } from "shared";
-import type { TaskStatsResponse, GetAllTasksResponse, TaskLogResponse } from "shared";
+import type {
+  TaskStatsResponse,
+  GetAllTasksResponse,
+  TaskLogResponse,
+  TaskCreateResponse,
+  GeneralResponse,
+} from "shared";
 import { sendCommandToQueue, sendTaskToQueue } from "../utils/rabbitMQ";
 
 const taskRouter = express.Router();
@@ -23,7 +29,7 @@ taskRouter.post("/create", validateRequest({ body: createTaskSchema }), async (r
     createdAt: new Date(),
   });
   sendTaskToQueue(createdTasks[0].id, req.body.priority || 0);
-  res.json({ taskId: createdTasks[0].id });
+  res.json({ taskId: createdTasks[0].id } as TaskCreateResponse);
 });
 
 taskRouter.get("/all", validateRequest({ query: allTasksSchema }), async (req, res) => {
@@ -94,13 +100,16 @@ taskRouter.get("/stats", validateRequest({ query: taskStatsSchema }), async (req
     if (task.status === TaskStatus.PENDING) pending++;
     if (task.status === TaskStatus.IN_PROGRESS) inProgress++;
 
-    // Calculate task duration if DONE status
-    if (task.status === TaskStatus.DONE && taskLogs.length > 0) {
+    // Calculate task duration if DONE/ERROR/CANCELLED status
+    if (
+      (task.status === TaskStatus.DONE || task.status === TaskStatus.ERROR || TaskStatus.CANCELLED) &&
+      taskLogs.length > 0
+    ) {
       const firstLog = taskLogs[0];
       const lastLog = taskLogs[taskLogs.length - 1];
       const duration = new Date(lastLog.createdAt).getTime() - new Date(firstLog.createdAt).getTime();
       totalDurations += duration;
-      if (duration > max_duration) max_duration = duration / 1000;
+      if (duration / 1000 > max_duration) max_duration = duration / 1000;
     }
   }
 
@@ -124,7 +133,7 @@ taskRouter.get("/:id", validateRequest({ params: taskIdSchema }), async (req, re
     .where(eq(tables.logs.taskId, req.params.id))
     .orderBy(tables.logs.createdAt);
   if (taskLogs.length === 0) {
-    res.status(404).json({ error: "No logs for task has been found" });
+    res.status(404).json({ message: "No logs for task has been found" } as GeneralResponse);
     return;
   }
   res.json({ logs: taskLogs } as TaskLogResponse);
@@ -133,62 +142,62 @@ taskRouter.get("/:id", validateRequest({ params: taskIdSchema }), async (req, re
 taskRouter.delete("/:id", validateRequest({ params: taskIdSchema }), async (req, res) => {
   const tasks = await db.delete(tables.tasks).where(eq(tables.tasks.id, req.params.id)).returning();
   if (tasks.length === 0) {
-    res.status(404).json({ error: "Task not found" });
+    res.status(404).json({ message: "Task not found" } as GeneralResponse);
     return;
   }
   // If the task is not finished, cancel it
   if (tasks[0].status !== TaskStatus.DONE && tasks[0].status !== TaskStatus.ERROR) {
     sendCommandToQueue({ type: CommandType.CANCEL_TASK }, req.params.id);
   }
-  res.json({ message: "Task deleted" });
+  res.json({ message: "Task deleted" } as GeneralResponse);
 });
 
 taskRouter.post("/:id/cancel", validateRequest({ params: taskIdSchema }), async (req, res) => {
   const tasks = await db.select().from(tables.tasks).where(eq(tables.tasks.id, req.params.id));
   if (tasks.length === 0) {
-    res.status(404).json({ error: "Task not found" });
+    res.status(404).json({ message: "Task not found" } as GeneralResponse);
     return;
   }
   if (tasks[0].status === TaskStatus.DONE || tasks[0].status === TaskStatus.ERROR) {
-    res.status(400).json({ error: "Task is already completed and cannot be cancelled" });
+    res.status(400).json({ message: "Task is already completed and cannot be cancelled" } as GeneralResponse);
     return;
   }
   sendCommandToQueue({ type: CommandType.CANCEL_TASK }, req.params.id);
-  res.json({ message: "Task cancellation command sent" });
+  res.json({ message: "Task cancellation command sent" } as GeneralResponse);
 });
 
 taskRouter.post("/:id/pause", validateRequest({ params: taskIdSchema }), async (req, res) => {
   const tasks = await db.select().from(tables.tasks).where(eq(tables.tasks.id, req.params.id));
   if (tasks.length === 0) {
-    res.status(404).json({ error: "Task not found" });
+    res.status(404).json({ message: "Task not found" } as GeneralResponse);
     return;
   }
   if (tasks[0].status !== TaskStatus.IN_PROGRESS) {
-    res.status(400).json({ error: "Task is not in progress and cannot be stopped" });
+    res.status(400).json({ message: "Task is not in progress and cannot be stopped" } as GeneralResponse);
     return;
   }
   sendCommandToQueue({ type: CommandType.PAUSE_TASK }, req.params.id);
-  res.json({ message: "Task pause command sent" });
+  res.json({ message: "Task pause command sent" } as GeneralResponse);
 });
 
 taskRouter.post("/:id/resume", validateRequest({ params: taskIdSchema }), async (req, res) => {
   const tasks = await db.select().from(tables.tasks).where(eq(tables.tasks.id, req.params.id));
   if (tasks.length === 0) {
-    res.status(404).json({ error: "Task not found" });
+    res.status(404).json({ message: "Task not found" } as GeneralResponse);
     return;
   }
   if (tasks[0].status !== TaskStatus.PAUSED) {
-    res.status(400).json({ error: "Task is not paused" });
+    res.status(400).json({ message: "Task is not paused" } as GeneralResponse);
     return;
   }
   sendCommandToQueue({ type: CommandType.RESUME_TASK }, req.params.id);
-  res.json({ message: "Task resume command sent" });
+  res.json({ message: "Task resume command sent" } as GeneralResponse);
 });
 
 taskRouter.post("/:id/restart", validateRequest({ params: taskIdSchema }), async (req, res) => {
   const tasks = await db.select().from(tables.tasks).where(eq(tables.tasks.id, req.params.id));
   if (tasks.length === 0) {
-    res.status(404).json({ error: "Task not found" });
+    res.status(404).json({ message: "Task not found" } as GeneralResponse);
     return;
   }
   if (
@@ -197,11 +206,11 @@ taskRouter.post("/:id/restart", validateRequest({ params: taskIdSchema }), async
     tasks[0].status === TaskStatus.ERROR ||
     tasks[0].status === TaskStatus.DONE
   ) {
-    res.status(400).json({ error: "Task cannot be restarted" });
+    res.status(400).json({ message: "Task cannot be restarted" } as GeneralResponse);
     return;
   }
   sendCommandToQueue({ type: CommandType.RESTART_TASK }, req.params.id);
-  res.json({ message: "Task restart command sent" });
+  res.json({ message: "Task restart command sent" } as GeneralResponse);
 });
 
 export default taskRouter;
