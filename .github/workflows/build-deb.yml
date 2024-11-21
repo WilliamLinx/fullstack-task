@@ -122,17 +122,47 @@ jobs:
           WantedBy=multi-user.target
           EOF
 
-      - name: Create postinst script
+      - name: Create preinst script
         run: |
-          cat << 'EOF' > task-service/DEBIAN/postinst
+          cat << 'EOF' > task-service/DEBIAN/preinst
           #!/bin/bash
           set -e
+
+          echo "Checking and installing missing dependencies..."
+
+          # Install Node.js 18 if not installed
+          if ! dpkg-query -W -f='${Status}' nodejs 2>/dev/null | grep "ok installed"; then
+            echo "Installing Node.js 18..."
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            apt-get install -y nodejs
+          fi
+
+          # Install npm if not installed
+          if ! dpkg-query -W -f='${Status}' npm 2>/dev/null | grep "ok installed"; then
+            echo "Installing npm..."
+            apt-get install -y npm
+          fi
 
           # Check and install Yarn
           if ! command -v yarn &>/dev/null; then
             echo "Yarn is not installed. Installing..."
             npm install --global yarn
           fi
+
+          # Install RabbitMQ if not installed
+          if ! dpkg-query -W -f='${Status}' rabbitmq-server 2>/dev/null | grep "ok installed"; then
+            echo "Installing RabbitMQ server..."
+            apt-get install -y rabbitmq-server
+          fi
+
+          EOF
+          chmod +x task-service/DEBIAN/preinst
+
+      - name: Create postinst script
+        run: |
+          cat << 'EOF' > task-service/DEBIAN/postinst
+          #!/bin/bash
+          set -e
 
           # Install dependencies using Yarn monorepo
           cd /usr/local/task-service
