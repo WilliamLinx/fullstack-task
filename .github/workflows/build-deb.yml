@@ -149,9 +149,11 @@ jobs:
           if [ ! -f "/var/lib/task-service/data.db" ]; then
             yarn workspace customer db:push
             # Change ownership of the database file to www-data
+            chown www-data:www-data /var/lib/task-service
             chown www-data:www-data /var/lib/task-service/data.db
             # Ensure write access
-            chmod 666 /var/lib/task-service/data.db
+            chmod 600 /var/lib/task-service
+            chmod 600 /var/lib/task-service/data.db
           fi
 
           # Reload systemd daemon
