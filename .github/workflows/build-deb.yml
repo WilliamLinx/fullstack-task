@@ -34,6 +34,7 @@ jobs:
           mkdir -p task-service/DEBIAN
           mkdir -p task-service/usr/local/task-service
           mkdir -p task-service/etc/systemd/system
+          mkdir -p task-service/var/lib/task-service
 
       - name: Copy built applications
         run: |
@@ -99,7 +100,7 @@ jobs:
           Environment=RABBITMQ_TASK_QUEUE_NAME=task_queue
           Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=command_exchange
           Environment=RABBITMQ_REPORT_QUEUE_NAME=report_queue
-          Environment=DB_FILE_NAME=file:/var/lib/task-service/customer/data.db
+          Environment=DB_FILE_NAME=file:/var/lib/task-service/data.db
           Environment=SERVER_PORT=3001
 
           [Install]
@@ -139,13 +140,13 @@ jobs:
             schema: "./db/schema.js",
             dialect: "sqlite",
             dbCredentials: {
-              url: "file:/var/lib/task-service/customer/data.db",
+              url: "file:/var/lib/task-service/data.db",
             },
           };
           CATEND
 
           # Run database creation if the database does not exist (in futuru would be migrations if exists)
-          if [ ! -f "/var/lib/task-service/customer/data.db" ]; then
+          if [ ! -f "/var/lib/task-service/data.db" ]; then
             yarn workspace customer db:push
           fi
 
