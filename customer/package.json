@@ -10,7 +10,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "postbuild": "cp package.json dist/package.json && cp yarn.lock dist/yarn.lock && cd dist && yarn install"
+    "postbuild": "cp package.json dist/package.json && cp yarn.lock dist/yarn.lock"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",

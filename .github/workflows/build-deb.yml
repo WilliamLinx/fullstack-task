@@ -38,11 +38,10 @@ jobs:
       - name: Copy built applications
         run: |
           cp -r executor/dist/ task-service/usr/local/task-service/executor
-          cp -r shared/ task-service/usr/local/task-service/executor/node_modules/shared
           cp -r customer/dist/ task-service/usr/local/task-service/customer
-          cp -r shared/ task-service/usr/local/task-service/customer/node_modules/shared
           cp -r frontend/.output/ task-service/usr/local/task-service/frontend
-          cp -r shared/ task-service/usr/local/task-service/frontend/server/node_modules/shared
+          cp package.json task-service/usr/local/task-service/
+          cp yarn.lock task-service/usr/local/task-service/
 
       - name: Create control file
         run: |
@@ -127,6 +126,10 @@ jobs:
           cat << 'EOF' > task-service/DEBIAN/postinst
           #!/bin/bash
           set -e
+
+          # Install dependencies using Yarn monorepo
+          cd /usr/local/task-service
+          yarn install
 
           # Reload systemd daemon
           systemctl daemon-reload
