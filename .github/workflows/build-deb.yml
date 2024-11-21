@@ -153,12 +153,9 @@ jobs:
           # Run database creation if the database does not exist (in futuru would be migrations if exists)
           if [ ! -f "/usr/local/task-service/customer/data.db" ]; then
             yarn workspace customer db:push
-            # Change ownership of the database file to www-data
-            chown www-data:www-data /usr/local/task-service/customer
-            chown www-data:www-data /usr/local/task-service/customer/data.db
             # Ensure write access
-            chmod 600 /usr/local/task-service/customer
-            chmod 600 /usr/local/task-service/customer/data.db
+            chmod 777 /usr/local/task-service/customer
+            chmod 777 /usr/local/task-service/customer/data.db
           fi
 
           # Reload systemd daemon
