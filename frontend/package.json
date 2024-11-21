@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "sass": "^1.81.0",
-    "shared": "^0.2.0",
     "typescript": "^5.6.3",
     "vue-tsc": "^2.1.10"
   }
