@@ -52,7 +52,7 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: all
-          Depends: nodejs (>= 18), npm, rabbitmq-server
+          Depends: nodejs (>= 18), yarnpkg, rabbitmq-server
           Maintainer: William Linx
           Description: Task Service for executing time consuming tasks in background distributed by RabbitMQ
           EOF
@@ -134,19 +134,14 @@ jobs:
             apt install -y nodejs
           fi
 
-          # Install npm if not installed
-          if ! command -v npm &>/dev/null; then
-            apt install -y npm
+          # Install Yarn if not installed
+          if ! command -v yarnpkg &>/dev/null; then
+            apt install -y yarnpkg
           fi
 
           # Install rabbitmq-server if not installed
           if ! dpkg -l | grep -qw rabbitmq-server; then
             apt install -y rabbitmq-server
-          fi
-
-          # Install Yarn if not installed
-          if ! command -v yarn &>/dev/null; then
-            npm install --global yarn
           fi
           EOF
           chmod +x task-service/DEBIAN/preinst
@@ -157,13 +152,9 @@ jobs:
           #!/bin/bash
           set -e
 
-          export PATH=$PATH:/usr/local/bin:/usr/bin:/bin
-
-          YARN_CMD=$(command -v yarn)
-
           # Install dependencies using Yarn monorepo
           cd /usr/local/task-service
-          $YARN_CMD install
+          yarnpkg install
 
           # Prepare drizzle-kit config
           cat << 'CATEND' > /usr/local/task-service/customer/drizzle.config.js
@@ -179,8 +170,7 @@ jobs:
 
           # Run database creation if the database does not exist (in futuru would be migrations if exists)
           if [ ! -f "/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}" ]; then
-            cd customer
-            $YARN_CMD db:push
+            yarnpkg workspace customer db:push
             # Ensure write access
             chmod 777 /usr/local/task-service/customer
             chmod 777 /usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
