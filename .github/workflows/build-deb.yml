@@ -179,7 +179,7 @@ jobs:
 
           # Run database creation if the database does not exist (in futuru would be migrations if exists)
           if [ ! -f "/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}" ]; then
-            yarn workspace customer db:push
+            $YARN_CMD workspace customer db:push
             # Ensure write access
             chmod 777 /usr/local/task-service/customer
             chmod 777 /usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
