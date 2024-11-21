@@ -130,10 +130,9 @@ jobs:
 
           echo "Checking and installing missing dependencies..."
 
-          # Install Node.js 18 if not installed
+          # Install Node.js if not installed
           if ! dpkg-query -W -f='${Status}' nodejs 2>/dev/null | grep "ok installed"; then
-            echo "Installing Node.js 18..."
-            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            echo "Installing Node.js..."
             apt-get install -y nodejs
           fi
 
