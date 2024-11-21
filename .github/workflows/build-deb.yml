@@ -67,8 +67,7 @@ jobs:
           [Service]
           Type=simple
           User=www-data
-          WorkingDirectory=/usr/local/task-service/executor
-          ExecStart=/usr/bin/node index.js
+          ExecStart=/usr/bin/node /usr/local/task-service/executor/index.js
           Restart=always
           Environment=INSTANCE_ID=%i
           Environment=RABBITMQ_HOST=localhost
@@ -91,8 +90,7 @@ jobs:
           [Service]
           Type=simple
           User=www-data
-          WorkingDirectory=/usr/local/task-service/customer
-          ExecStart=/usr/bin/node index.js
+          ExecStart=/usr/bin/node /usr/local/task-service/customer/index.js
           Restart=always
           Environment=RABBITMQ_HOST=localhost
           Environment=RABBITMQ_PORT=5672
@@ -101,7 +99,7 @@ jobs:
           Environment=RABBITMQ_TASK_QUEUE_NAME=task_queue
           Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=command_exchange
           Environment=RABBITMQ_REPORT_QUEUE_NAME=report_queue
-          Environment=DB_FILE_NAME=file:data.db
+          Environment=DB_FILE_NAME=file:/usr/local/task-service/customer/data.db
           Environment=SERVER_PORT=3001
 
           [Install]
@@ -116,8 +114,7 @@ jobs:
           [Service]
           Type=simple
           User=www-data
-          WorkingDirectory=/usr/local/task-service/frontend
-          ExecStart=/usr/bin/node server/index.mjs
+          ExecStart=/usr/bin/node /usr/local/task-service/frontend/server/index.mjs
           Restart=always
           Environment=NUXT_PUBLIC_API_BASE=http://localhost:3001
 
@@ -148,7 +145,7 @@ jobs:
             schema: "./db/schema.js",
             dialect: "sqlite",
             dbCredentials: {
-              url: "file:data.db",
+              url: "file:/usr/local/task-service/customer/data.db",
             },
           };
           CATEND
