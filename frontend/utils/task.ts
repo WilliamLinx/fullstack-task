@@ -1,4 +1,4 @@
-import { TaskStatus } from "shared/types/task";
+import { TaskStatus } from "shared/src/types/task";
 
 export function colorForStatus(status: TaskStatus) {
   switch (status) {

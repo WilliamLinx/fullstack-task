@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TaskStatsResponse } from "shared/types/response";
+import type { TaskStatsResponse } from "shared/src/types/response";
 
 const config = useRuntimeConfig();
 

@@ -24,6 +24,7 @@ jobs:
 
       - name: Build applications
         run: |
+          yarn workspace shared build
           yarn workspace executor build
           yarn workspace customer build
           yarn workspace frontend build
@@ -36,15 +37,12 @@ jobs:
 
       - name: Copy built applications
         run: |
-          cp -r packages/executor task-service/usr/local/task-service/
-          cp -r packages/customer task-service/usr/local/task-service/
-          cp -r packages/frontend task-service/usr/local/task-service/
-
-      - name: Install production dependencies
-        run: |
-          cd task-service/usr/local/task-service/executor && yarn install --production && cd -
-          cd task-service/usr/local/task-service/customer && yarn install --production && cd -
-          cd task-service/usr/local/task-service/frontend && yarn install --production && cd -
+          cp -r executor/dist/ task-service/usr/local/task-service/executor
+          cp -r customer/dist/ task-service/usr/local/task-service/customer
+          cp -r frontend/.output/ task-service/usr/local/task-service/frontend
+          cp -r shared/ task-service/usr/local/task-service/shared
+          cp package.json task-service/usr/local/task-service/
+          cp yarn.lock task-service/usr/local/task-service/
 
       - name: Create control file
         run: |
@@ -54,9 +52,9 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: all
-          Depends: nodejs (>= 18), yarn, rabbitmq-server
+          Depends: nodejs (>= 18), npm, rabbitmq-server
           Maintainer: William Linx
-          Description: Služba pro exekuci úloh s RabbitMQ
+          Description: Task Service for executing time consuming tasks in background distributed by RabbitMQ
           EOF
 
       - name: Create systemd service files
@@ -64,7 +62,7 @@ jobs:
           cat << 'EOF' > task-service/etc/systemd/system/executor@.service
           [Unit]
           Description=Executor Service Instance %i
-          After=network.target
+          After=network.target rabbitmq-server.service
 
           [Service]
           Type=simple
@@ -72,6 +70,13 @@ jobs:
           ExecStart=/usr/bin/node /usr/local/task-service/executor/index.js
           Restart=always
           Environment=INSTANCE_ID=%i
+          Environment=RABBITMQ_HOST=${{ vars.RABBITMQ_HOST }}
+          Environment=RABBITMQ_PORT=${{ vars.RABBITMQ_PORT }}
+          Environment=RABBITMQ_USER=${{ secrets.RABBITMQ_USER}}
+          Environment=RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD}}
+          Environment=RABBITMQ_TASK_QUEUE_NAME=${{ vars.RABBITMQ_TASK_QUEUE_NAME }}
+          Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=${{ vars.RABBITMQ_COMMAND_EXCHANGE_NAME }}
+          Environment=RABBITMQ_REPORT_QUEUE_NAME=${{ vars.RABBITMQ_REPORT_QUEUE_NAME }}
 
           [Install]
           WantedBy=multi-user.target
@@ -80,13 +85,22 @@ jobs:
           cat << 'EOF' > task-service/etc/systemd/system/customer.service
           [Unit]
           Description=Customer Service
-          After=network.target
+          After=network.target rabbitmq-server.service
 
           [Service]
           Type=simple
           User=www-data
           ExecStart=/usr/bin/node /usr/local/task-service/customer/index.js
           Restart=always
+          Environment=RABBITMQ_HOST=${{ vars.RABBITMQ_HOST }}
+          Environment=RABBITMQ_PORT=${{ vars.RABBITMQ_PORT }}
+          Environment=RABBITMQ_USER=${{ secrets.RABBITMQ_USER}}
+          Environment=RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD}}
+          Environment=RABBITMQ_TASK_QUEUE_NAME=${{ vars.RABBITMQ_TASK_QUEUE_NAME }}
+          Environment=RABBITMQ_COMMAND_EXCHANGE_NAME=${{ vars.RABBITMQ_COMMAND_EXCHANGE_NAME }}
+          Environment=RABBITMQ_REPORT_QUEUE_NAME=${{ vars.RABBITMQ_REPORT_QUEUE_NAME }}
+          Environment=DB_FILE_NAME=file:/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
+          Environment=SERVER_PORT=${{ vars.CUSTOMER_SERVER_PORT }}
 
           [Install]
           WantedBy=multi-user.target
@@ -95,13 +109,14 @@ jobs:
           cat << 'EOF' > task-service/etc/systemd/system/frontend.service
           [Unit]
           Description=Frontend Service
-          After=network.target
+          After=network.target rabbitmq-server.service
 
           [Service]
           Type=simple
           User=www-data
-          ExecStart=/usr/bin/node /usr/local/task-service/frontend/index.js
+          ExecStart=/usr/bin/node /usr/local/task-service/frontend/server/index.mjs
           Restart=always
+          Environment=NUXT_PUBLIC_API_BASE=http://localhost:${{ vars.CUSTOMER_SERVER_PORT }}
 
           [Install]
           WantedBy=multi-user.target
@@ -112,6 +127,36 @@ jobs:
           cat << 'EOF' > task-service/DEBIAN/postinst
           #!/bin/bash
           set -e
+
+          # Check and install Yarn
+          if ! command -v yarn &>/dev/null; then
+            echo "Yarn is not installed. Installing..."
+            npm install --global yarn
+          fi
+
+          # Install dependencies using Yarn monorepo
+          cd /usr/local/task-service
+          yarn install
+
+          # Prepare drizzle-kit config
+          cat << 'CATEND' > /usr/local/task-service/customer/drizzle.config.js
+          module.exports = {
+            out: "./drizzle",
+            schema: "./db/schema.js",
+            dialect: "sqlite",
+            dbCredentials: {
+              url: "file:/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}",
+            },
+          };
+          CATEND
+
+          # Run database creation if the database does not exist (in futuru would be migrations if exists)
+          if [ ! -f "/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}" ]; then
+            yarn workspace customer db:push
+            # Ensure write access
+            chmod 777 /usr/local/task-service/customer
+            chmod 777 /usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
+          fi
 
           # Reload systemd daemon
           systemctl daemon-reload

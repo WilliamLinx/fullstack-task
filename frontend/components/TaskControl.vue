@@ -111,9 +111,9 @@
 import TaskLog from "./Dialog/TaskLog.vue";
 
 import type { QTable, QTableColumn } from "quasar";
-import type { GetAllTasksResponse, Task } from "shared/types/response";
+import type { GetAllTasksResponse, Task } from "shared/src/types/response";
 
-import { TaskStatus } from "shared/types/task";
+import { TaskStatus } from "shared/src/types/task";
 
 const config = useRuntimeConfig();
 const q = useQuasar();
@@ -308,6 +308,20 @@ async function deleteTask(taskId: string) {
 
 onMounted(() => {
   tableRef.value?.requestServerInteraction();
+
+  watch(
+    autoRefresh,
+    (value) => {
+      if (value) {
+        autoRefreshInterval.value = setInterval(() => tableRef.value?.requestServerInteraction(), 3000);
+      } else {
+        if (autoRefreshInterval.value) {
+          clearInterval(autoRefreshInterval.value);
+        }
+      }
+    },
+    { immediate: true }
+  );
 });
 
 onUnmounted(() => {
@@ -315,20 +329,6 @@ onUnmounted(() => {
     clearInterval(autoRefreshInterval.value);
   }
 });
-
-watch(
-  autoRefresh,
-  (value) => {
-    if (value) {
-      autoRefreshInterval.value = setInterval(() => tableRef.value?.requestServerInteraction(), 3000);
-    } else {
-      if (autoRefreshInterval.value) {
-        clearInterval(autoRefreshInterval.value);
-      }
-    }
-  },
-  { immediate: true }
-);
 </script>
 
 <style scoped lang="sass"></style>

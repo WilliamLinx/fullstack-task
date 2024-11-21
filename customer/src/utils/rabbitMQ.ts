@@ -1,7 +1,7 @@
 import amqp, { Connection, Channel, ConsumeMessage } from "amqplib";
 
 import { db, eq, tables } from "../db";
-import { Command, ErrorReport, ProgressReport, ReportType, TaskStatus, Report } from "shared/types/task";
+import { Command, ErrorReport, ProgressReport, ReportType, TaskStatus, Report } from "shared";
 
 let connection: Connection | null = null;
 let channel: Channel | null = null;
