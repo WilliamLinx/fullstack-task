@@ -133,7 +133,7 @@ jobs:
           yarn install
 
           # Prepare drizzle-kit config
-          cat << 'EOF' > /usr/local/task-service/customer/drizzle.config.js
+          cat << 'CATEND' > /usr/local/task-service/customer/drizzle.config.js
           module.exports = {
             out: "./drizzle",
             schema: "./db/schema.js",
@@ -142,13 +142,12 @@ jobs:
               url: "file:/usr/local/task-service/customer/data.db",
             },
           };
-          EOF
+          CATEND
 
           # Run database creation if the database does not exist (in futuru would be migrations if exists)
           if [ ! -f "/usr/local/task-service/customer/data.db" ]; then
             yarn workspace customer db:push
           fi
-
 
           # Reload systemd daemon
           systemctl daemon-reload
