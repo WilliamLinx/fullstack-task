@@ -128,11 +128,24 @@ jobs:
           #!/bin/bash
           set -e
 
-          apt install -y nodejs npm rabbitmq-server
+          # Install Node.js (>=18) if not installed
+          if ! command -v node &>/dev/null || [ "$(node -v | cut -d. -f1 | cut -c2-)" -lt 18 ]; then
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            apt install -y nodejs
+          fi
 
-          # Check and install Yarn
+          # Install npm if not installed
+          if ! command -v npm &>/dev/null; then
+            apt install -y npm
+          fi
+
+          # Install rabbitmq-server if not installed
+          if ! dpkg -l | grep -qw rabbitmq-server; then
+            apt install -y rabbitmq-server
+          fi
+
+          # Install Yarn if not installed
           if ! command -v yarn &>/dev/null; then
-            echo "Yarn is not installed. Installing..."
             npm install --global yarn
           fi
           EOF
