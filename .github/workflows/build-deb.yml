@@ -62,7 +62,7 @@ jobs:
           cat << 'EOF' > task-service/etc/systemd/system/executor@.service
           [Unit]
           Description=Executor Service Instance %i
-          After=network.target
+          After=network.target rabbitmq-server.service
 
           [Service]
           Type=simple
@@ -85,7 +85,7 @@ jobs:
           cat << 'EOF' > task-service/etc/systemd/system/customer.service
           [Unit]
           Description=Customer Service
-          After=network.target
+          After=network.target rabbitmq-server.service
 
           [Service]
           Type=simple
@@ -109,7 +109,7 @@ jobs:
           cat << 'EOF' > task-service/etc/systemd/system/frontend.service
           [Unit]
           Description=Frontend Service
-          After=network.target
+          After=network.target rabbitmq-server.service
 
           [Service]
           Type=simple
