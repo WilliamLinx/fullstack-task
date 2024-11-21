@@ -40,6 +40,7 @@ jobs:
           cp -r executor/dist/ task-service/usr/local/task-service/executor
           cp -r customer/dist/ task-service/usr/local/task-service/customer
           cp -r frontend/.output/ task-service/usr/local/task-service/frontend
+          cp -r shared/ task-service/usr/local/task-service/shared
           cp package.json task-service/usr/local/task-service/
           cp yarn.lock task-service/usr/local/task-service/
 
