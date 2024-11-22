@@ -130,7 +130,7 @@ jobs:
 
           # Install dependencies using Yarn monorepo
           cd /usr/local/task-service
-          yarnpkg install --production --frozen-lockfile --non-interactive
+          yarnpkg install --production
 
           # Prepare drizzle-kit config
           cat << 'CATEND' > /usr/local/task-service/customer/drizzle.config.js
