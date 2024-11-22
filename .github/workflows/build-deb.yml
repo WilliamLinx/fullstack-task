@@ -152,9 +152,6 @@ jobs:
             chmod 777 /usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
           fi
 
-          # Reload systemd daemon
-          systemctl daemon-reload
-
           # Enable services
           systemctl enable executor@1.service
           systemctl enable executor@2.service
