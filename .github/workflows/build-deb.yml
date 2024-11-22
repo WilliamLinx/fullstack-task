@@ -52,7 +52,7 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: all
-          Depends: nodejs (>= 18), npm, rabbitmq-server
+          Depends: nodejs (>= 18), yarnpkg, rabbitmq-server
           Maintainer: William Linx
           Description: Task Service for executing time consuming tasks in background distributed by RabbitMQ
           EOF
@@ -128,15 +128,9 @@ jobs:
           #!/bin/bash
           set -e
 
-          # Check and install Yarn
-          if ! command -v yarn &>/dev/null; then
-            echo "Yarn is not installed. Installing..."
-            npm install --global yarn
-          fi
-
           # Install dependencies using Yarn monorepo
           cd /usr/local/task-service
-          yarn install
+          yarnpkg install
 
           # Prepare drizzle-kit config
           cat << 'CATEND' > /usr/local/task-service/customer/drizzle.config.js
@@ -152,7 +146,7 @@ jobs:
 
           # Run database creation if the database does not exist (in futuru would be migrations if exists)
           if [ ! -f "/usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}" ]; then
-            yarn workspace customer db:push
+            yarnpkg workspace customer db:push
             # Ensure write access
             chmod 777 /usr/local/task-service/customer
             chmod 777 /usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
