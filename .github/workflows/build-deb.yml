@@ -122,30 +122,6 @@ jobs:
           WantedBy=multi-user.target
           EOF
 
-      - name: Create preinst script
-        run: |
-          cat << 'EOF' > task-service/DEBIAN/preinst
-          #!/bin/bash
-          set -e
-
-          # Install Node.js (>=18) if not installed
-          if ! command -v node &>/dev/null || [ "$(node -v | cut -d. -f1 | cut -c2-)" -lt 18 ]; then
-            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-            apt install -y nodejs
-          fi
-
-          # Install Yarn if not installed
-          if ! command -v yarnpkg &>/dev/null; then
-            apt install -y yarnpkg
-          fi
-
-          # Install rabbitmq-server if not installed
-          if ! dpkg -l | grep -qw rabbitmq-server; then
-            apt install -y rabbitmq-server
-          fi
-          EOF
-          chmod +x task-service/DEBIAN/preinst
-
       - name: Create postinst script
         run: |
           cat << 'EOF' > task-service/DEBIAN/postinst
