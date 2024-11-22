@@ -130,7 +130,7 @@ jobs:
 
           # Install dependencies using Yarn monorepo
           cd /usr/local/task-service
-          yarnpkg install
+          yarnpkg install --production --frozen-lockfile --non-interactive
 
           # Prepare drizzle-kit config
           cat << 'CATEND' > /usr/local/task-service/customer/drizzle.config.js
@@ -151,6 +151,9 @@ jobs:
             chmod 777 /usr/local/task-service/customer
             chmod 777 /usr/local/task-service/customer/${{ vars.DB_FILE_NAME }}
           fi
+
+          # Reload systemd daemon
+          systemctl daemon-reload
 
           # Enable services
           systemctl enable executor@1.service
